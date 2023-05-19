@@ -1,0 +1,314 @@
+Create DTOs, abstraction layers, conversion layers, facade, controller depends on facade, facade depends on services
+
+Do rest of this
+
+1) Comment out spring boot starter jpa
+
+2) Put rest controlere on top of the application
+
+	@GetMapping("/")
+	public String hello(){
+		return "hello";
+	}
+
+in body of application
+
+
+3) Create Student class without database
+give it allargs, no args an constructor without id
+give it to string and getset
+
+
+4) Test Class in your application
+
+@GetMapping("/")
+	public List<Client> hello(){
+		return List.of(
+				new Client("boy", "dls")
+		);
+	}
+
+5) Create an API layer ClientController
+Give this layer RestControl and put all api functions in it
+
+@RestController
+@RequestMapping("/api/v1/client")
+public class ClientController {
+
+    @GetMapping
+    public List<Client> hello(){
+        return List.of(
+                new Client("boy", "dls")
+        );
+    }
+}
+
+
+4)Create a service layer ClientService
+Put all functions in this class
+
+public class ClientService {
+
+    public List<Client> hello(){
+        return List.of(
+                new Client("boy", "dls")
+        );
+    }
+}
+
+go to ClientController
+Remove Functions
+and call client service
+give controller client service as a parameter make it final
+make a constructor for it
+autowire constructor
+create function that calls service
+
+@RestController
+@RequestMapping("/api/v1/client")
+public class ClientController {
+
+    private final ClientService clientService;
+
+    @Autowired
+    public ClientController(ClientService clientService) {
+        this.clientService = clientService;
+    }
+
+
+    @GetMapping
+    public List<Client> getClients(){
+        return clientService.getClients();
+    }
+}
+
+
+
+
+
+
+
+
+5) Connecting to database
+Paste this in application.properties
+
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
+spring.datasource.username=postgres
+spring.datasource.password=password
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.format_sql=true
+
+
+server.error.include-message = always
+
+
+where first line points to your database
+in psql
+\l to list databases
+CREATE DATABASE client;
+GRANT ALL PRIVILEGES ON DATABASE "client" TO EKOW;
+
+Uncomment out spring boot starter jpa
+
+Put
+@entity
+@Table
+ on top of client class
+
+In client class put this on top of id
+
+    @Id
+    @SequenceGenerator(
+            name = "client_sequence",
+            sequenceName = "client_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "client_sequence"
+    )
+
+Download database navgator
+Connect to postgresql
+connect to your database
+if you want to write sql change schema to yours
+
+
+6) Create the data access layer
+Create a client reposirtory interface
+and let it extend jparepository
+and in the angle brackets put in the class you want to work with and the id type
+Annotate with @Reposiroty
+
+Like this
+
+@Repository
+public interface ClientRepository extends JpaRepository<Client, Long> {
+}
+
+So now we can let the service layer access the repository
+By passing the repository as a parameter
+and constructing the service with just the reposiroty
+then annotate with @Autowire
+So now your service class return from repository
+
+
+THIS IS A GET MAPPING
+
+
+
+@Service
+public class ClientService {
+
+    private ClientRepository clientRepository;
+
+    @Autowired
+    public ClientService(ClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
+    }
+
+    public List<Client> getClients(){
+        return clientRepository.findAll();
+    }
+}
+
+So now all layers are connected
+
+
+7) Saving to database from code
+create Student config file and annotate it with configuration
+
+Create a commanlinerunner in it and annotate with @Bean = This runs after spring has been run and
+
+@Configuration
+public class ClientConfig {
+
+    @Bean
+    CommandLineRunner commandLineRunner(ClientRepository clientRepository){
+        return args -> { Client mary = new Client("Mary", "mary@gmail.com");
+                        Client marian = new Client("Marian", "marian@gmail.com");
+                         clientRepository.saveAll(List.of(mary, marian));
+            ;};
+    }
+}
+
+
+8) Calculating age
+
+public Integer getAge() {
+        return Period.between(LocalDate.of(2002, 04, 23), LocalDate.now()).getYears();
+    }
+
+Put @Transient on private int age so that a field wont be made in database
+But you will get it because of the toString
+First part should have been calculating this.dob
+
+
+9) POST MAPPING
+Create an add client method in the service
+Let your controller take it then map it to post
+Put a reuestbody in your postmapping
+
+In client service
+public void addNewClient(Client client) {
+        System.out.println(client);
+    }
+
+In controller
+
+@PostMapping
+    public void registerNewClient(@RequestBody Client client){
+        clientService.addNewClient(client);
+    }
+
+
+10) Post mapping(Business logic)
+Now we want to add client to database
+But we want to check whether theyre in or not
+
+So in your repository class
+Optional<Client> findStudentByEmail(String email);
+
+Now in your controller
+
+11) Delete a client
+
+In service
+
+public void deleteClient(Long clientId) {
+        boolean exist = clientRepository.existsById(clientId);
+        if(!exist){
+            throw new IllegalStateException("client with id: " + clientId + " already exist");
+        }
+        clientRepository.deleteById(clientId);
+    }
+
+
+In Controller
+
+@DeleteMapping(path = "{clientId}")
+    public void deleteClient(@PathVariable("clientId")Long clientId){
+        clientService.deleteClient(clientId);
+    }
+
+12) Update Client
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Learn
+Dependency inject = when the object of class you want hasnt been instantiated
+So you put autowired oon top of constructor
+Then @Component or in or case @Service on top of the objects class
+@Bean
+
+
+
+
+
